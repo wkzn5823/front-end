@@ -8,11 +8,5 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  server: {
-    proxy: {
-      // Redirige todas las solicitudes a la API a tu backend en Render
-      '/api': 'https://productsvents.onrender.com', // Cambia esta URL con la URL real de tu backend en Render
-    },
-  },
+  }
 })
