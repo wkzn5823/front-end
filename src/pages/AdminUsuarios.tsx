@@ -50,7 +50,7 @@ export default function AdminUsuarios() {
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // Usamos la variable de entorno REACT_APP_API_URL configurada en Vercel
+  // Usamos la variable de entorno VITE_API_URL configurada en Vercel
   const API_URL = `${import.meta.env.VITE_API_URL}/api/auth/get-users`;
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function AdminUsuarios() {
 
   const handleDeleteUser = async (id: number) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/auth/delete-user/${id}`, {
+      await axios.delete(`${process.env.VITE_API_URL}/auth/delete-user/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
@@ -103,7 +103,7 @@ export default function AdminUsuarios() {
   const handleUpdateRole = async (id: number, newRole: number) => {
     try {
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/auth/update-role/${id}`,
+        `${process.env.VITE_API_URL}/auth/update-role/${id}`,
         { role_id: newRole },
         {
           headers: {
@@ -137,7 +137,7 @@ export default function AdminUsuarios() {
 
     try {
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/register`,
+        `${process.env.VITE_API_URL}/auth/register`,
         {
           nombre: newUser.nombre,
           email: newUser.email,
