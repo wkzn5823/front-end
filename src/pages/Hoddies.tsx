@@ -1,57 +1,63 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { motion } from "framer-motion"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import PolaroidCard from "../components/PolaroidCard"
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
+import log from "loglevel"; // ✅ Integración de loglevel
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import PolaroidCard from "../components/PolaroidCard";
 
 interface Producto {
-  id: number
-  nombre: string
-  descripcion: string
-  imagen_url: string
-  categoria: string
-  precio: number | string
+  id: number;
+  nombre: string;
+  descripcion: string;
+  imagen_url: string;
+  categoria: string;
+  precio: number | string;
 }
 
 const Hoodies = () => {
-  const [hoodies, setHoodies] = useState<Producto[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [hoodies, setHoodies] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // ✅ Uso correcto de la variable de entorno
   const API_URL = `${import.meta.env.VITE_API_URL}/api/productos`;
-  
-
 
   useEffect(() => {
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+
     const fetchHoodies = async () => {
       try {
+        log.info("Obteniendo lista de productos desde la API...");
+
         const response = await axios.get<Producto[]>(API_URL, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
-        })
+        });
+
+        log.debug("Respuesta de la API:", response.data);
 
         const filteredHoodies = response.data
           .filter((product) => product.categoria.toLowerCase() === "hoodies")
           .map((hoodie) => ({
             ...hoodie,
             precio: Number(hoodie.precio) || 0,
-          }))
+          }));
 
-        setHoodies(filteredHoodies)
+        setHoodies(filteredHoodies);
       } catch (err) {
-        setError("Error al cargar los productos.")
-        console.error(err)
+        setError("Error al cargar los productos.");
+        log.error("🚨 Error al obtener productos:", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchHoodies()
-  }, [API_URL])
+    fetchHoodies();
+  }, [API_URL]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -61,7 +67,7 @@ const Hoodies = () => {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -73,7 +79,7 @@ const Hoodies = () => {
         stiffness: 100,
       },
     },
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -136,8 +142,7 @@ const Hoodies = () => {
       </motion.main>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default Hoodies
-
+export default Hoodies;

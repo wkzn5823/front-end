@@ -1,53 +1,62 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { motion } from "framer-motion"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import PolaroidCard from "../components/PolaroidCard"
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import PolaroidCard from "../components/PolaroidCard";
+import log from "loglevel"; // Gestión de logs segura
 
 interface Producto {
-  id: number
-  nombre: string
-  descripcion: string
-  precio: string
-  imagen_url: string
-  categoria: string
+  id: number;
+  nombre: string;
+  descripcion: string;
+  precio: string;
+  imagen_url: string;
+  categoria: string;
 }
 
 const Accessories = () => {
-  const [accessories, setAccessories] = useState<Producto[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [accessories, setAccessories] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const API_URL = `${import.meta.env.VITE_API_URL}/api/productos`;
 
-
-
   useEffect(() => {
+    // Configuración de nivel de logs según entorno
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+
     const fetchAccessories = async () => {
       try {
+        log.debug("Solicitud de accesorios iniciada.");
+
         const response = await axios.get<Producto[]>(API_URL, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
-        })
+        });
 
-        const filteredAccessories = response.data.filter((product) => product.categoria.toLowerCase() === "accesorios")
+        const filteredAccessories = response.data.filter(
+          (product) => product.categoria.toLowerCase() === "accesorios"
+        );
 
-        setAccessories(filteredAccessories)
+        log.info(`Cantidad de accesorios obtenidos: ${filteredAccessories.length}`);
+
+        setAccessories(filteredAccessories);
       } catch (err) {
-        setError("Error al cargar los productos.")
-        console.error(err)
+        setError("Error al cargar los productos.");
+        log.error("Error al obtener accesorios desde la API", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
+        log.debug("Solicitud de accesorios completada.");
       }
-    }
+    };
 
-    fetchAccessories()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    fetchAccessories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -57,7 +66,7 @@ const Accessories = () => {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -69,7 +78,7 @@ const Accessories = () => {
         stiffness: 100,
       },
     },
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -132,8 +141,7 @@ const Accessories = () => {
       </motion.main>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default Accessories
-
+export default Accessories;

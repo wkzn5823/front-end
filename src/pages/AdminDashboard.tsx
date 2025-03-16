@@ -1,16 +1,17 @@
-"use client"
-import { useState, useEffect, useCallback } from "react"
-import axios from "axios"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Loader2, Search, Plus, Trash2 } from "lucide-react"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Loader2, Search, Plus, Trash2 } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,28 +21,29 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import log from "loglevel"; // ✅ Integración de loglevel
 
 interface Producto {
-  id: number
-  nombre: string
-  descripcion: string
-  precio: number
-  stock: number
-  categoria_id: number
-  imagen_url: string
+  id: number;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  stock: number;
+  categoria_id: number;
+  imagen_url: string;
 }
 
 const formatPrice = (price: number | string) => {
-  const numPrice = typeof price === "string" ? Number.parseFloat(price) : price
-  return isNaN(numPrice) ? "0.00" : numPrice.toFixed(2)
-}
+  const numPrice = typeof price === "string" ? Number.parseFloat(price) : price;
+  return isNaN(numPrice) ? "0.00" : numPrice.toFixed(2);
+};
 
 export default function AdminProductos() {
-  const { toast } = useToast()
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const { toast } = useToast();
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [nuevoProducto, setNuevoProducto] = useState({
     nombre: "",
     descripcion: "",
@@ -49,38 +51,42 @@ export default function AdminProductos() {
     stock: "",
     categoria_id: "",
     imagen_url: "",
-  })
+  });
 
   const API_URL = `${import.meta.env.VITE_API_URL}/api/productos`;
 
+  useEffect(() => {
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+    fetchProductos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchProductos = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
+      log.debug("Obteniendo productos...");
       const response = await axios.get<Producto[]>(API_URL, {
         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
-      })
-      setProductos(response.data)
-    } catch (err) {
-      console.error("Error al cargar productos:", err)
-      toast({ title: "Error", description: "Error al cargar productos.", variant: "destructive" })
-    } finally {
-      setLoading(false)
-    }
-  }, [API_URL, toast])
+      });
 
-  useEffect(() => {
-    fetchProductos()
-  }, [fetchProductos])
+      setProductos(response.data);
+      log.info(`Productos obtenidos: ${response.data.length}`);
+    } catch (err) {
+      log.error("Error al obtener productos:", err);
+      toast({ title: "Error", description: "Error al cargar productos.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [API_URL, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const { nombre, descripcion, precio, stock, categoria_id, imagen_url } = nuevoProducto
-    const token = localStorage.getItem("accessToken")
+    e.preventDefault();
+    const { nombre, descripcion, precio, stock, categoria_id, imagen_url } = nuevoProducto;
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      toast({ title: "Error", description: "No tienes permisos.", variant: "destructive" })
-      return
+      toast({ title: "Error", description: "No tienes permisos.", variant: "destructive" });
+      return;
     }
 
     try {
@@ -97,61 +103,44 @@ export default function AdminProductos() {
         {
           headers: { Authorization: `Bearer ${token}` },
         }
-      )
+      );
 
       if (response.data.success) {
-        toast({ title: "Producto agregado", description: "El producto fue agregado correctamente." })
-        fetchProductos() // Actualiza la lista de productos
+        log.info(`Producto agregado: ${nombre}`);
+        toast({ title: "Producto agregado", description: "El producto fue agregado correctamente." });
+        fetchProductos();
       } else {
-        toast({ title: "Error", description: "No se pudo agregar el producto.", variant: "destructive" })
+        toast({ title: "Error", description: "No se pudo agregar el producto.", variant: "destructive" });
       }
-    } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const axiosError = error as { response?: { data?: any; status?: number } }
-      console.error("🚨 Error al agregar producto:", axiosError.response?.data || axiosError)
-
-      toast({
-        title: "Error",
-        description: axiosError.response?.data?.error || "No se pudo agregar el producto.",
-        variant: "destructive",
-      })
+    } catch (err) {
+      log.error("Error al agregar producto:", err);
+      toast({ title: "Error", description: "No se pudo agregar el producto.", variant: "destructive" });
     }
-  }
+  };
 
   const handleDelete = async (id: number) => {
-    const token = localStorage.getItem("accessToken")
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
-      toast({ title: "Error", description: "No tienes permisos.", variant: "destructive" })
-      return
+      toast({ title: "Error", description: "No tienes permisos.", variant: "destructive" });
+      return;
     }
 
     try {
-      const response = await axios.delete(`${API_URL}/${id}`, {
+      await axios.delete(`${API_URL}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
+      });
 
-      if (response.data.success) {
-        toast({ title: "Producto eliminado", description: "Se eliminó correctamente." })
-
-        setProductos((prevProductos) => prevProductos.filter((p) => p.id !== id))
-      } else {
-        toast({ title: "Error", description: "No se pudo eliminar.", variant: "destructive" })
-      }
-    } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const axiosError = error as { response?: { data?: any; status?: number } }
-      console.error("🚨 Error al eliminar producto:", axiosError.response?.data || axiosError)
-
-      toast({
-        title: "Error",
-        description: axiosError.response?.data?.error || "No se pudo eliminar.",
-        variant: "destructive",
-      })
+      log.warn(`Producto eliminado ID: ${id}`);
+      toast({ title: "Producto eliminado", description: "Se eliminó correctamente." });
+      setProductos((prevProductos) => prevProductos.filter((p) => p.id !== id));
+    } catch (err) {
+      log.error("Error al eliminar producto:", err);
+      toast({ title: "Error", description: "No se pudo eliminar.", variant: "destructive" });
     } finally {
-      setDeleteId(null)
+      setDeleteId(null);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

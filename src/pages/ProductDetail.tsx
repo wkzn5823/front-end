@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import log from "loglevel"; // ✅ Integración de loglevel
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useCart } from "../context/CartContext";
@@ -36,20 +37,23 @@ const ProductDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [tallaSeleccionada, setTallaSeleccionada] = useState<string | null>(null);
 
-  // Usamos la variable de entorno REACT_APP_API_URL para la URL base
+  // ✅ Uso correcto de la variable de entorno
   const API_URL = `${import.meta.env.VITE_API_URL}/api`;
-
 
   const fetchProducto = useCallback(async () => {
     try {
+      log.info(`Obteniendo producto con ID: ${id}`);
       const response = await axios.get<Producto>(`${API_URL}/productos/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
+
+      log.debug("Respuesta de la API:", response.data);
       setProducto(response.data);
     } catch (err) {
       setError("Error al cargar el producto.");
+      log.error("🚨 Error al obtener el producto:", err);
     } finally {
       setLoading(false);
     }
@@ -63,15 +67,7 @@ const ProductDetail = () => {
     if (!producto) return;
 
     if (producto.categoria_id !== CATEGORIA_ACCESORIOS && !tallaSeleccionada) {
-      toast.error("Por favor, selecciona una talla antes de añadir al carrito", {
-        duration: 3000,
-        style: {
-          background: "#333",
-          color: "#fff",
-          borderRadius: "10px",
-        },
-        icon: "👕",
-      });
+      toast.error("Por favor, selecciona una talla antes de añadir al carrito");
       return;
     }
 
@@ -86,15 +82,7 @@ const ProductDetail = () => {
       imageUrl: producto.imagen_url,
     });
 
-    toast.success(`¡${producto.nombre} añadido al carrito!`, {
-      duration: 3000,
-      style: {
-        background: "#333",
-        color: "#fff",
-        borderRadius: "10px",
-      },
-      icon: "✨",
-    });
+    toast.success(`¡${producto.nombre} añadido al carrito!`);
   };
 
   if (loading)

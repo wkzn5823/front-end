@@ -1,121 +1,112 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { useNavigate, useLocation } from "react-router-dom"
-import { FaEnvelope, FaLock, FaUser } from "react-icons/fa"
-import { motion } from "framer-motion"
-import ElegantNotification from "../components/ElegantNotification"
-import myImage from '../assets/imgI.webp'; 
+import type React from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
+import { motion } from "framer-motion";
+import ElegantNotification from "../components/ElegantNotification";
+import myImage from '../assets/imgI.webp';
+import log from 'loglevel'; // Librería para logs
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const [isLogin, setIsLogin] = useState(true)
-  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [imageLoaded, setImageLoaded] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const API_URL = `${import.meta.env.VITE_API_URL}/api`;
 
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken")
-    const user = JSON.parse(localStorage.getItem("user") || "{}")
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+    const accessToken = localStorage.getItem("accessToken");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (accessToken && user.role_id) {
-      navigate(user.role_id === 1 ? "/admin-dashboard" : "/home")
+      navigate(user.role_id === 1 ? "/admin-dashboard" : "/home");
     }
-  }, [navigate])
+  }, [navigate]);
 
   useEffect(() => {
-    setTimeout(() => setImageLoaded(true), 100)
-  }, [])
+    setTimeout(() => setImageLoaded(true), 100);
+  }, []);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken")
-    const user = JSON.parse(localStorage.getItem("user") || "{}")
+    const accessToken = localStorage.getItem("accessToken");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (accessToken && user.role_id === 1 && location.pathname !== "/admin-dashboard") {
-      navigate("/admin-dashboard")
+      navigate("/admin-dashboard");
     }
-  }, [navigate, location])
+  }, [navigate, location]);
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setNotification(null)
+    event.preventDefault();
+    setNotification(null);
 
     try {
-      let response
+      let response;
 
       if (isLogin) {
         response = await axios.post(
           `${API_URL}/auth/login`,
-          {
-            email,
-            contraseña: password,
-          },
+          { email, contraseña: password },
           { withCredentials: true },
-        )
+        );
 
         if (response.data.success) {
-          const user = response.data.user
-          const token = response.data.accessToken
+          const user = response.data.user;
+          const token = response.data.accessToken;
 
-
-          localStorage.setItem("accessToken", token)
+          localStorage.setItem("accessToken", token);
           localStorage.setItem(
             "user",
-            JSON.stringify({
-              id: user.id,
-              nombre: user.nombre,
-              email: user.email,
-              role_id: user.role_id,
-            }),
-          )
+            JSON.stringify({ id: user.id, nombre: user.nombre, email: user.email, role_id: user.role_id }),
+          );
 
-          setNotification({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." })
+          log.info("Usuario inició sesión:", user.email);
+
+          setNotification({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
 
           setTimeout(() => {
-            navigate(user.role_id === 1 ? "/admin-dashboard" : "/home")
-            window.location.reload()
-          }, 2000)
+            navigate(user.role_id === 1 ? "/admin-dashboard" : "/home");
+            window.location.reload();
+          }, 2000);
         }
       } else {
-
         response = await axios.post(
           `${API_URL}/auth/register-client`,
-          {
-            nombre: name,
-            email,
-            contraseña: password,
-          },
-          {
-            headers: { "Content-Type": "application/json" },
-          },
-        )
-        setNotification({ type: "success", text: "Registro exitoso. Redirigiendo a inicio de sesión..." })
+          { nombre: name, email, contraseña: password },
+          { headers: { "Content-Type": "application/json" } },
+        );
+
+        log.info("Nuevo usuario registrado:", email);
+
+        setNotification({ type: "success", text: "Registro exitoso. Redirigiendo a inicio de sesión..." });
 
         setTimeout(() => {
-          setIsLogin(true)
-          setName("")
-          setEmail("")
-          setPassword("")
-        }, 2000)
+          setIsLogin(true);
+          setName("");
+          setEmail("");
+          setPassword("");
+        }, 2000);
       }
     } catch (err: unknown) {
-      console.error("🚨 Error en la solicitud:", err)
+      log.error("Error en la solicitud:", err);
 
       if (axios.isAxiosError(err)) {
-        setNotification({ type: "error", text: err.response?.data?.error || "Error en el proceso" })
+        setNotification({ type: "error", text: err.response?.data?.error || "Error en el proceso" });
       } else {
-        setNotification({ type: "error", text: "Ocurrió un error inesperado." })
+        setNotification({ type: "error", text: "Ocurrió un error inesperado." });
       }
     }
-  }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -127,7 +118,7 @@ const Login: React.FC = () => {
         duration: 0.3,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -136,7 +127,7 @@ const Login: React.FC = () => {
       opacity: 1,
       transition: { type: "spring", stiffness: 400, damping: 20 },
     },
-  }
+  };
 
   return (
     <div style={styles.pageContainer}>
@@ -145,87 +136,30 @@ const Login: React.FC = () => {
         type={notification?.type}
         onClose={() => setNotification(null)}
       />
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        style={styles.leftContainer}
-      >
+      <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} style={styles.leftContainer}>
         <motion.div style={styles.formContainer} variants={containerVariants} initial="hidden" animate="visible">
           <motion.form onSubmit={handleSubmit} style={styles.form} variants={containerVariants}>
-            <motion.h2 style={styles.title} variants={itemVariants}>
-              {isLogin ? "LOGIN" : "REGÍSTRATE"}
-            </motion.h2>
+            <motion.h2 style={styles.title} variants={itemVariants}>{isLogin ? "LOGIN" : "REGÍSTRATE"}</motion.h2>
 
             <motion.div style={styles.inputContainer} variants={itemVariants}>
               {isLogin ? <FaEnvelope style={styles.icon} /> : <FaUser style={styles.icon} />}
-              <input
-                type={isLogin ? "email" : "text"}
-                value={isLogin ? email : name}
-                onChange={(e) => (isLogin ? setEmail(e.target.value) : setName(e.target.value))}
-                style={styles.input}
-                placeholder={isLogin ? "Correo" : "Nombre"}
-                required
-              />
+              <input type={isLogin ? "email" : "text"} value={isLogin ? email : name} onChange={(e) => (isLogin ? setEmail(e.target.value) : setName(e.target.value))} style={styles.input} placeholder={isLogin ? "Correo" : "Nombre"} required />
             </motion.div>
 
-            {!isLogin && (
-              <motion.div style={styles.inputContainer} variants={itemVariants}>
-                <FaEnvelope style={styles.icon} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={styles.input}
-                  placeholder="Correo"
-                  required
-                />
-              </motion.div>
-            )}
+            {!isLogin && (<motion.div style={styles.inputContainer} variants={itemVariants}><FaEnvelope style={styles.icon} /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} placeholder="Correo" required /></motion.div>)}
 
-            <motion.div style={styles.inputContainer} variants={itemVariants}>
-              <FaLock style={styles.icon} />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={styles.input}
-                placeholder="Contraseña"
-                required
-              />
-            </motion.div>
+            <motion.div style={styles.inputContainer} variants={itemVariants}><FaLock style={styles.icon} /><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={styles.input} placeholder="Contraseña" required /></motion.div>
 
-            <motion.button
-              type="submit"
-              style={styles.button}
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>{isLogin ? "INICIAR" : "REGISTRAR"}</span>
-            </motion.button>
+            <motion.button type="submit" style={styles.button} variants={itemVariants} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><span>{isLogin ? "INICIAR" : "REGISTRAR"}</span></motion.button>
 
-            <motion.p style={styles.registerText} variants={itemVariants}>
-              {isLogin ? "No tienes una cuenta?" : "Ya tienes una cuenta?"}{" "}
-              <button type="button" onClick={() => setIsLogin(!isLogin)} style={styles.registerLink}>
-                {isLogin ? "Regístrate" : "Inicia Sesión"}
-              </button>
-            </motion.p>
+            <motion.p style={styles.registerText} variants={itemVariants}>{isLogin ? "No tienes una cuenta?" : "Ya tienes una cuenta?"} <button type="button" onClick={() => setIsLogin(!isLogin)} style={styles.registerLink}>{isLogin ? "Regístrate" : "Inicia Sesión"}</button></motion.p>
           </motion.form>
         </motion.div>
       </motion.div>
-      <motion.div
-        style={{
-          ...styles.rightContainer,
-          opacity: imageLoaded ? 1 : 0,
-        }}
-        initial={{ x: 50, opacity: 0 }}
-        animate={{ x: 0, opacity: imageLoaded ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
-      />
+      <motion.div style={{...styles.rightContainer, opacity: imageLoaded ? 1 : 0 }} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: imageLoaded ? 1 : 0 }} transition={{ duration: 0.3 }} />
     </div>
-  )
-}
+  );
+};
 
 const styles = {
   pageContainer: {

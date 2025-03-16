@@ -9,11 +9,15 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import jsPDF from "jspdf";
 import { X } from "lucide-react";
+import log from "loglevel"; // ✅ Integración de loglevel
 
 function Cart() {
   const { cart, clearCart, removeFromCart } = useCart();
 
-  useEffect(() => {}, [cart]);
+  useEffect(() => {
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+    log.debug("Carrito actualizado:", cart);
+  }, [cart]);
 
   // Calcular totales con seguridad
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
@@ -63,10 +67,10 @@ function Cart() {
         })),
       };
 
-      // Usamos la variable de entorno REACT_APP_API_URL para la URL del backend
+      // ✅ Uso correcto de la variable de entorno
       const API_URL = `${import.meta.env.VITE_API_URL}`;
 
-
+      log.info("Enviando pedido a la API...");
       const response = await axios.post(`${API_URL}/api/pedidos`, pedidoData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
@@ -79,7 +83,7 @@ function Cart() {
         toast.error("❌ Error al procesar la compra.", { position: "top-center", autoClose: 3000 });
       }
     } catch (error: unknown) {
-      console.error("🚨 Error al finalizar la compra:", error);
+      log.error("🚨 Error al finalizar la compra:", error);
       const errorMessage = error instanceof Error ? error.message : "Error desconocido";
       toast.error(`❌ Error al procesar la compra: ${errorMessage}`, { position: "top-center", autoClose: 3000 });
     }
@@ -88,20 +92,16 @@ function Cart() {
   // 📜 Función para generar el ticket PDF
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generarTicketPDF = (pedidoData: any) => {
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: [80, 130],
-    });
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 130] });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("TIENDA XYZ", 40, 10, { align: "center" });
 
     doc.setFontSize(10);
-    doc.text("Dirección: Calle  123", 40, 15, { align: "center" });
+    doc.text("Dirección: Calle 123", 40, 15, { align: "center" });
     doc.text("Clabe: 638180010125857119", 40, 20, { align: "center" });
-    doc.text("Enviar comprobante de pago a: ", 40, 25, { align: "center" });
+    doc.text("Enviar comprobante a:", 40, 25, { align: "center" });
     doc.text("alexisencarnacion5823@gmail.com", 40, 30, { align: "center" });
 
     doc.line(5, 33, 75, 34);

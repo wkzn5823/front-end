@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import log from "loglevel"; // ✅ Integración de loglevel
 
 interface Usuario {
   id: number;
@@ -50,24 +51,28 @@ export default function AdminUsuarios() {
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // Usamos la variable de entorno VITE_API_URL configurada en Vercel
-  const API_URL = `${import.meta.env.VITE_API_URL}/api/auth/get-users`;
+  // ✅ Uso correcto de la variable de entorno
+  const API_URL = `${import.meta.env.VITE_API_URL}/api/auth`;
 
   useEffect(() => {
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
     fetchUsuarios();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const response = await axios.get<{ success: boolean; users: Usuario[] }>(API_URL, {
+      log.debug("Obteniendo usuarios...");
+      const response = await axios.get<{ success: boolean; users: Usuario[] }>(`${API_URL}/get-users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
       setUsuarios(response.data.users);
+      log.info(`Usuarios obtenidos: ${response.data.users.length}`);
     } catch (err) {
+      log.error("Error al obtener usuarios:", err);
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios.",
@@ -80,7 +85,7 @@ export default function AdminUsuarios() {
 
   const handleDeleteUser = async (id: number) => {
     try {
-      await axios.delete(`${process.env.VITE_API_URL}/auth/delete-user/${id}`, {
+      await axios.delete(`${API_URL}/delete-user/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
@@ -92,6 +97,7 @@ export default function AdminUsuarios() {
       });
       setDeleteId(null);
     } catch (err) {
+      log.error("Error al eliminar usuario:", err);
       toast({
         title: "Error",
         description: "No se pudo eliminar el usuario.",
@@ -103,7 +109,7 @@ export default function AdminUsuarios() {
   const handleUpdateRole = async (id: number, newRole: number) => {
     try {
       await axios.put(
-        `${process.env.VITE_API_URL}/auth/update-role/${id}`,
+        `${API_URL}/update-role/${id}`,
         { role_id: newRole },
         {
           headers: {
@@ -117,6 +123,7 @@ export default function AdminUsuarios() {
         description: "El rol del usuario ha sido actualizado exitosamente.",
       });
     } catch (error) {
+      log.error("Error al actualizar rol:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el rol del usuario.",
@@ -137,7 +144,7 @@ export default function AdminUsuarios() {
 
     try {
       await axios.post(
-        `${process.env.VITE_API_URL}/auth/register`,
+        `${API_URL}/register`,
         {
           nombre: newUser.nombre,
           email: newUser.email,
@@ -157,6 +164,7 @@ export default function AdminUsuarios() {
       fetchUsuarios();
       setNewUser({ nombre: "", email: "", contraseña: "", role_id: 3 });
     } catch (err) {
+      log.error("Error al agregar usuario:", err);
       toast({
         title: "Error",
         description: "No se pudo agregar el usuario.",

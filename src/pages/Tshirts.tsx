@@ -1,50 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { motion } from "framer-motion"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import PolaroidCard from "../components/PolaroidCard"
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
+import log from "loglevel"; // ✅ Integración de loglevel
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import PolaroidCard from "../components/PolaroidCard";
 
 interface Producto {
-  id: number
-  nombre: string
-  descripcion: string
-  precio: string
-  imagen_url: string
-  categoria: string
+  id: number;
+  nombre: string;
+  descripcion: string;
+  precio: string;
+  imagen_url: string;
+  categoria: string;
 }
 
 const Tshirts = () => {
-  const [tshirts, setTshirts] = useState<Producto[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const [tshirts, setTshirts] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // ✅ Uso correcto de la variable de entorno
   const API_URL = `${import.meta.env.VITE_API_URL}/api/productos`;
 
   useEffect(() => {
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+
     const fetchTshirts = async () => {
       try {
+        log.info("Obteniendo lista de productos desde la API...");
+
         const response = await axios.get<Producto[]>(API_URL, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
-        })
+        });
 
-        const filteredTshirts = response.data.filter((product) => product.categoria.toLowerCase() === "camisetas")
+        log.debug("Respuesta de la API:", response.data);
 
-        setTshirts(filteredTshirts)
+        const filteredTshirts = response.data.filter(
+          (product) => product.categoria.toLowerCase() === "camisetas"
+        );
+
+        setTshirts(filteredTshirts);
       } catch (err) {
-        setError("Error al cargar productos.")
-        console.error(err)
+        setError("Error al cargar productos.");
+        log.error("🚨 Error al obtener productos:", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchTshirts()
-  }, [API_URL])
+    fetchTshirts();
+  }, [API_URL]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -54,7 +64,7 @@ const Tshirts = () => {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -66,7 +76,7 @@ const Tshirts = () => {
         stiffness: 100,
       },
     },
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -86,8 +96,26 @@ const Tshirts = () => {
           CAMISETAS
         </motion.h1>
 
-        {loading && <p className="text-center text-lg">Cargando productos...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {loading && (
+          <motion.p
+            className="text-center text-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Cargando productos...
+          </motion.p>
+        )}
+        {error && (
+          <motion.p
+            className="text-center text-red-500"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {error}
+          </motion.p>
+        )}
 
         {!loading && !error && (
           <motion.div
@@ -111,8 +139,7 @@ const Tshirts = () => {
       </motion.main>
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default Tshirts
-
+export default Tshirts;

@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import axios from "axios"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Loader2, Search, Plus, Trash2, RefreshCw, Edit, Save } from "lucide-react"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Loader2, Search, Plus, Trash2, RefreshCw, Edit, Save } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,78 +21,65 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import log from "loglevel"; // ✅ Integración de loglevel
 
 interface Categoria {
-  id: number
-  nombre: string
+  id: number;
+  nombre: string;
 }
 
 export default function AdminCategorias() {
-  const { toast } = useToast()
-  const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [newCategoria, setNewCategoria] = useState("")
-  const [editCategoria, setEditCategoria] = useState<Categoria | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const { toast } = useToast();
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [newCategoria, setNewCategoria] = useState("");
+  const [editCategoria, setEditCategoria] = useState<Categoria | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const API_URL = `${import.meta.env.VITE_API_URL}/api/categorias`;
 
-
-
   useEffect(() => {
-    fetchCategorias()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    log.setLevel(import.meta.env.PROD ? "warn" : "debug");
+    fetchCategorias();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchCategorias = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        toast({
-          title: "Error",
-          description: "No tienes permisos para ver categorías.",
-          variant: "destructive",
-        })
-        return
+        toast({ title: "Error", description: "No tienes permisos para ver categorías.", variant: "destructive" });
+        return;
       }
 
+      log.debug("Obteniendo categorías...");
       const response = await axios.get<Categoria[]>(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      setCategorias(response.data)
+      });
+
+      setCategorias(response.data);
+      log.info(`Categorías obtenidas: ${response.data.length}`);
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Error al cargar categorías.",
-        variant: "destructive",
-      })
-      console.error(err)
+      toast({ title: "Error", description: "Error al cargar categorías.", variant: "destructive" });
+      log.error("Error al obtener categorías:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddCategoria = async () => {
     if (!newCategoria.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre de la categoría es obligatorio.",
-        variant: "destructive",
-      })
-      return
+      toast({ title: "Error", description: "El nombre de la categoría es obligatorio.", variant: "destructive" });
+      return;
     }
 
-    const token = localStorage.getItem("accessToken")
+    const token = localStorage.getItem("accessToken");
     if (!token) {
-      toast({
-        title: "Error",
-        description: "No tienes permisos para agregar categorías. Inicia sesión nuevamente.",
-        variant: "destructive",
-      })
-      return
+      toast({ title: "Error", description: "No tienes permisos para agregar categorías.", variant: "destructive" });
+      return;
     }
 
     try {
@@ -100,48 +87,32 @@ export default function AdminCategorias() {
         API_URL,
         { nombre: newCategoria },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      )
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        }
+      );
 
-      toast({
-        title: "Éxito",
-        description: "Categoría agregada exitosamente.",
-      })
-      fetchCategorias()
-      setNewCategoria("")
+      toast({ title: "Éxito", description: "Categoría agregada exitosamente." });
+      log.info(`Categoría agregada: ${newCategoria}`);
+
+      fetchCategorias();
+      setNewCategoria("");
     } catch (err) {
-      console.error("Error al agregar categoría:", err)
-      toast({
-        title: "Error",
-        description: "Error al agregar categoría. Inténtalo nuevamente.",
-        variant: "destructive",
-      })
+      log.error("Error al agregar categoría:", err);
+      toast({ title: "Error", description: "Error al agregar categoría.", variant: "destructive" });
     }
-  }
+  };
 
   const handleEditCategoria = async () => {
     if (!editCategoria || !editCategoria.nombre.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre de la categoría no puede estar vacío.",
-        variant: "destructive",
-      })
-      return
+      toast({ title: "Error", description: "El nombre de la categoría no puede estar vacío.", variant: "destructive" });
+      return;
     }
 
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        toast({
-          title: "Error",
-          description: "No tienes permisos para actualizar categorías.",
-          variant: "destructive",
-        })
-        return
+        toast({ title: "Error", description: "No tienes permisos para actualizar categorías.", variant: "destructive" });
+        return;
       }
 
       await axios.put(
@@ -149,54 +120,40 @@ export default function AdminCategorias() {
         { nombre: editCategoria.nombre },
         {
           headers: { Authorization: `Bearer ${token}` },
-        },
-      )
+        }
+      );
 
-      toast({
-        title: "Éxito",
-        description: "Categoría actualizada exitosamente.",
-      })
-      fetchCategorias()
-      setEditCategoria(null)
+      log.info(`Categoría actualizada: ${editCategoria.nombre}`);
+      toast({ title: "Éxito", description: "Categoría actualizada exitosamente." });
+
+      fetchCategorias();
+      setEditCategoria(null);
     } catch (err) {
-      console.error("Error al actualizar categoría:", err)
-      toast({
-        title: "Error",
-        description: "Error al actualizar categoría. Inténtalo nuevamente.",
-        variant: "destructive",
-      })
+      log.error("Error al actualizar categoría:", err);
+      toast({ title: "Error", description: "Error al actualizar categoría.", variant: "destructive" });
     }
-  }
+  };
 
   const handleDeleteCategoria = async (id: number) => {
     try {
-      const token = localStorage.getItem("accessToken")
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        toast({
-          title: "Error",
-          description: "No tienes permisos para eliminar categorías.",
-          variant: "destructive",
-        })
-        return
+        toast({ title: "Error", description: "No tienes permisos para eliminar categorías.", variant: "destructive" });
+        return;
       }
 
       await axios.delete(`${API_URL}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
+      });
 
-      toast({
-        title: "Éxito",
-        description: "Categoría eliminada exitosamente.",
-      })
-      fetchCategorias()
-      setDeleteId(null)
+      log.warn(`Categoría eliminada ID: ${id}`);
+      toast({ title: "Éxito", description: "Categoría eliminada exitosamente." });
+
+      fetchCategorias();
+      setDeleteId(null);
     } catch (err) {
-      console.error("Error al eliminar categoría:", err)
-      toast({
-        title: "Error",
-        description: "Error al eliminar categoría. Inténtalo nuevamente.",
-        variant: "destructive",
-      })
+      log.error("Error al eliminar categoría:", err);
+      toast({ title: "Error", description: "Error al eliminar categoría.", variant: "destructive" });
     }
   }
 
