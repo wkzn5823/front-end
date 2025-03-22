@@ -97,6 +97,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   { path: "/admin-productos", label: "Gestionar Productos" },
                   { path: "/admin-categorias", label: "Gestionar Categorías" },
                   { path: "/admin-usuarios", label: "Gestionar Usuarios" },
+                  { path: "/Logs", label: "Gestionar Logs" },
                 ].map(({ path, label }) => (
                   <li key={path}>
                     <button className={linkClass(path)} onClick={() => handleNavigation(path)}>

@@ -13,6 +13,7 @@ import CookiesPolicy from "./pages/CookiesPolicy";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Legal from "./pages/Legal";
+import Logs from "./pages/Logs";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsuarios from "./pages/AdminUsuarios";
@@ -92,6 +93,7 @@ function App() {
             <Route path="/admin-usuarios" element={<AdminUsuarios />} />
             <Route path="/admin-categorias" element={<AdminCategorias />} />
             <Route path="/admin-ventas" element={<AdminVentas />} />
+            <Route path="/Logs" element={<Logs />} />
           </Route>
 
           {/* 🔹 Si alguien intenta acceder a una ruta inválida, lo redirigimos a /login */}
